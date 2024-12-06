@@ -3,6 +3,7 @@ package paseto
 import (
 	"github.com/o1egl/paseto"
 	"rpc-server/config"
+	auth "rpc-server/gRPC/proto"
 )
 
 type PasetoMaker struct {
@@ -18,7 +19,7 @@ func NewPasetoMaker(cfg *config.Config) *PasetoMaker {
 }
 
 // payload를 추가함으로써 새로운 토큰 제작
-func (m *PasetoMaker) CreateNewToken() (string, error) {
+func (m *PasetoMaker) CreateNewToken(auth *auth.AuthData) (string, error) {
 	return "", nil
 }
 
