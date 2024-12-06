@@ -1,0 +1,42 @@
+syntax = "proto3"; //proto 사용한다! 라는 정도로만 알고있기
+option go_package = "/auth";
+
+message AuthData { //각각 필드 명에 대한 고유한 숫자값을 지정해줘야함. 중복 XXXXXX
+  string name = 1;
+  string token = 2;
+  int64 createDate = 3;
+  int64 expireDate = 4;
+}
+
+message Verify {
+  ResponseType status = 1; //repeated 등을 붙여서 작성할 수 있다.
+  AuthData auth = 2;
+}
+
+enum ResponseType {
+  SUCCESS = 0;
+  FAILED = 1;
+  EXPIRED_DATE = 2;
+}
+
+//type 선언
+message CreateTokenReq {
+  AuthData auth = 1;
+}
+
+message CreateTokenRes {
+  AuthData auth = 2;
+}
+
+message VerifyTokenReq {
+  string token = 1;
+}
+
+message VerifyTokenRes {
+  Verify v = 1;
+}
+
+service AuthService { //사용할 함수들을 정의내리기
+  rpc CreateAuth(CreateTokenReq) returns (CreateTokenRes);
+  rpc VerifyToken(VerifyTokenReq) returns (VerifyTokenRes);
+}
