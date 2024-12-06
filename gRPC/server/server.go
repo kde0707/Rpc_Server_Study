@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -8,11 +9,13 @@ import (
 	"rpc-server/config"
 	"rpc-server/gRPC/paseto"
 	auth "rpc-server/gRPC/proto"
+	"time"
 )
 
 type GRPCServer struct {
+	auth.AuthServiceServer
 	pasetoMaker    *paseto.PasetoMaker
-	tokenVerifyMap map[string]auth.AuthData
+	tokenVerifyMap map[string]*auth.AuthData
 }
 
 func NewGRPCServer(cfg *config.Config) error {
@@ -21,11 +24,10 @@ func NewGRPCServer(cfg *config.Config) error {
 	} else {
 		server := grpc.NewServer([]grpc.ServerOption{}...)
 
-		////AuthServiceServer
-		//auth.RegisterAuthServiceServer(server, &GRPCServer{
-		//		pasetoMaker: paseto.NewPasetoMaker(),
-		//		tokenVerifyMap: make(map[string]*auth.AuthData),
-		//}
+		auth.RegisterAuthServiceServer(server, &GRPCServer{
+			pasetoMaker:    paseto.NewPasetoMaker(cfg),
+			tokenVerifyMap: make(map[string]*auth.AuthData),
+		})
 
 		reflection.Register(server)
 
@@ -35,9 +37,33 @@ func NewGRPCServer(cfg *config.Config) error {
 				panic(err)
 			}
 		}()
-
-		//RegisterAuthServiceServer
 	}
 
 	return nil
+}
+
+func (s *GRPCServer) CreateAuth(_ context.Context, req *auth.CreateTokenReq) (*auth.CreateTokenRes, error) {
+	data := req.Auth
+	token := data.Token
+
+	s.tokenVerifyMap[token] = data
+	return &auth.CreateTokenRes{Auth: data}, nil
+}
+
+func (s *GRPCServer) VerifyToke(_ context.Context, req *auth.VerifyTokenReq) (*auth.VerifyTokenRes, error) {
+	token := req.Token
+	res := &auth.VerifyTokenRes{V: &auth.Verify{
+		Auth: nil,
+	}}
+
+	if authData, ok := s.tokenVerifyMap[token]; ok {
+		res.V.Status = auth.ResponseType_FAILED //관리되지 않는 토큰
+	} else if authData.ExpireDate < time.Now().Unix() {
+		delete(s.tokenVerifyMap, token)
+		res.V.Status = auth.ResponseType_EXPIRED_DATE //토큰 만료
+	} else {
+		res.V.Status = auth.ResponseType_SUCCESS
+	}
+
+	return res, nil
 }
