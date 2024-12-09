@@ -25,7 +25,7 @@ message CreateTokenReq {
 }
 
 message CreateTokenRes {
-  AuthData auth = 2;
+  AuthData auth = 1;
 }
 
 message VerifyTokenReq {
@@ -38,5 +38,5 @@ message VerifyTokenRes {
 
 service AuthService { //사용할 함수들을 정의내리기
   rpc CreateAuth(CreateTokenReq) returns (CreateTokenRes);
-  rpc VerifyToken(VerifyTokenReq) returns (VerifyTokenRes);
+  rpc VerifyAuth(VerifyTokenReq) returns (VerifyTokenRes);
 }
