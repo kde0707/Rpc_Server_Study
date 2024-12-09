@@ -10,7 +10,7 @@ import (
 
 /*
 *
-서버에서 관리하는 관리 포인터들
+서버에서 관리하는 관리 포인터들**
 */
 type App struct {
 	cfg *config.Config
