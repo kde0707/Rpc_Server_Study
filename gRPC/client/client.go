@@ -41,7 +41,7 @@ func (g *GRPCClient) CreateAuth(name string) (*auth.AuthData, error) {
 		ExpireDate: expiredTime.Unix(),
 	}
 
-	if token, err := g.pasetoMaker.CreateNewToken(a); err != nil {
+	if token, err := g.pasetoMaker.CreateNewToken(*a); err != nil {
 		return nil, err
 	} else {
 		a.Token = token
@@ -52,7 +52,6 @@ func (g *GRPCClient) CreateAuth(name string) (*auth.AuthData, error) {
 			return res.Auth, nil
 		}
 	}
-	return nil, nil
 }
 
 func (g *GRPCClient) VerifyAuth(token string) (*auth.Verify, error) {
@@ -61,5 +60,4 @@ func (g *GRPCClient) VerifyAuth(token string) (*auth.Verify, error) {
 	} else {
 		return res.V, nil
 	}
-	return nil, nil
 }

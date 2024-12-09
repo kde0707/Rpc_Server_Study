@@ -50,14 +50,16 @@ func (s *GRPCServer) CreateAuth(_ context.Context, req *auth.CreateTokenReq) (*a
 	return &auth.CreateTokenRes{Auth: data}, nil
 }
 
-func (s *GRPCServer) VerifyToke(_ context.Context, req *auth.VerifyTokenReq) (*auth.VerifyTokenRes, error) {
+func (s *GRPCServer) VerifyAuth(_ context.Context, req *auth.VerifyTokenReq) (*auth.VerifyTokenRes, error) {
 	token := req.Token
 	res := &auth.VerifyTokenRes{V: &auth.Verify{
 		Auth: nil,
 	}}
 
-	if authData, ok := s.tokenVerifyMap[token]; ok {
+	if authData, ok := s.tokenVerifyMap[token]; !ok {
 		res.V.Status = auth.ResponseType_FAILED //관리되지 않는 토큰
+	} else if err := s.pasetoMaker.VerifyToken(token); err != nil {
+		res.V.Status = auth.ResponseType_FAILED
 	} else if authData.ExpireDate < time.Now().Unix() {
 		delete(s.tokenVerifyMap, token)
 		res.V.Status = auth.ResponseType_EXPIRED_DATE //토큰 만료
