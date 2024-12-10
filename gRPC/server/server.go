@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -52,20 +53,24 @@ func (s *GRPCServer) CreateAuth(_ context.Context, req *auth.CreateTokenReq) (*a
 
 func (s *GRPCServer) VerifyAuth(_ context.Context, req *auth.VerifyTokenReq) (*auth.VerifyTokenRes, error) {
 	token := req.Token
-	res := &auth.VerifyTokenRes{V: &auth.Verify{
-		Auth: nil,
-	}}
+	res := &auth.VerifyTokenRes{V: &auth.Verify{Auth: nil}}
 
 	if authData, ok := s.tokenVerifyMap[token]; !ok {
-		res.V.Status = auth.ResponseType_FAILED //관리되지 않는 토큰
-	} else if err := s.pasetoMaker.VerifyToken(token); err != nil {
 		res.V.Status = auth.ResponseType_FAILED
+		return res, errors.New("Not Existed At TokenVerifyMap")
+	} else if err := s.pasetoMaker.VerifyToken(token); err != nil {
+		return nil, errors.New("Failed Verify Token")
 	} else if authData.ExpireDate < time.Now().Unix() {
 		delete(s.tokenVerifyMap, token)
-		res.V.Status = auth.ResponseType_EXPIRED_DATE //토큰 만료
+		res.V.Status = auth.ResponseType_EXPIRED_DATE
+		return res, errors.New("Expired Time Over")
 	} else {
 		res.V.Status = auth.ResponseType_SUCCESS
+		return res, nil
 	}
+}
 
-	return res, nil
+func (s *GRPCServer) mustEmbedUnimplementedAuthServiceServer() {
+	//TODO implement me
+	panic("implement me")
 }
